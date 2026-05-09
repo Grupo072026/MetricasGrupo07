@@ -1,6 +1,6 @@
 # metricas-calidad-utb
 
-## Actividad semana 3 - Grupo 7
+## Actividad semana 4 - Grupo 7
 
 Proyecto de registro LuxeStay Hotels -  SONARCUBE.
 
