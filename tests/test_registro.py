@@ -9,6 +9,7 @@ Ejecución:
     pytest test_registro.py -v
 """
 
+import os
 import time
 import pytest
 from pathlib import Path
@@ -60,8 +61,16 @@ def resultados():
 def driver(resultados):
     """Instancia única del navegador. Al cerrar muestra el resumen en pantalla."""
     opciones = webdriver.ChromeOptions()
-    opciones.add_argument("--start-maximized")
     opciones.add_argument("--disable-notifications")
+
+    if os.getenv("CI"):
+        opciones.add_argument("--headless=new")
+        opciones.add_argument("--no-sandbox")
+        opciones.add_argument("--disable-dev-shm-usage")
+        opciones.add_argument("--disable-gpu")
+        opciones.add_argument("--window-size=1920,1080")
+    else:
+        opciones.add_argument("--start-maximized")
 
     d = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()),
@@ -73,7 +82,8 @@ def driver(resultados):
 
     # ── Al terminar todos los tests: mostrar resumen en el navegador ───────
     mostrar_resumen(d, resultados)
-    time.sleep(30)   # segundos que el navegador permanece abierto con el resumen
+    if not os.getenv("CI"):
+        time.sleep(30)
     d.quit()
 
 

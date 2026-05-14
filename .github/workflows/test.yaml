@@ -22,4 +22,4 @@ jobs:
       run: pip install -r requirements.txt;
     - name: Test with pytest
       working-directory: tests
-      run: pytest test_registro.py
+      run: pytest test_registro.py -v
