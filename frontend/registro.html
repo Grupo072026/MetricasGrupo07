@@ -707,7 +707,7 @@
     if (!v)            { e.push('La contraseña es obligatoria.'); return e; }
     if (v.length < 8)  e.push('Mínimo 8 caracteres.');
     if (!/[A-Z]/.test(v)) e.push('Al menos una letra mayúscula.');
-    if (!/[0-9]/.test(v)) e.push('Al menos un número.');
+    if (!/\d/.test(v)) e.push('Al menos un número.');
     return e;
   }
 
@@ -785,7 +785,7 @@
   }
 
   function guardarUsuarioLocal(nombre, correo) {
-    window.__usuariosRegistrados.push({
+    globalThis.__usuariosRegistrados.push({
       nombre: nombre.trim(),
       correo: correo.trim().toLowerCase(),
       fechaRegistro: new Date().toISOString()
