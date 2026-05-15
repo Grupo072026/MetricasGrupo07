@@ -689,7 +689,7 @@
     if (!v.trim())               e.push('El nombre es obligatorio.');
     else if (v.trim().length < 3) e.push('Mínimo 3 caracteres.');
     else if (v.trim().length > 60) e.push('Máximo 60 caracteres.');
-    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]+$/.test(v.trim()))
+    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(v.trim()))
       e.push('Solo letras y espacios.');
     return e;
   }
@@ -717,7 +717,7 @@
     if (v.length >= 8)  s++;
     if (v.length >= 12) s++;
     if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
-    if (/[0-9]/.test(v)) s++;
+    if (/\d/.test(v)) s++;
     if (/[^A-Za-z0-9]/.test(v)) s++;
     if (s <= 1) return { level:1, label:'Muy débil', cls:'active-weak'   };
     if (s === 2) return { level:2, label:'Débil',    cls:'active-fair'   };
@@ -776,10 +776,10 @@
   });
 
   // Registro local de respaldo para conservar compatibilidad al abrir el HTML directamente.
-  window.__usuariosRegistrados = [];
+  globalThis.__usuariosRegistrados = [];
 
   function correoYaRegistrado(correo) {
-    return window.__usuariosRegistrados.some(
+    return globalThis.__usuariosRegistrados.some(
       u => u.correo.toLowerCase() === correo.trim().toLowerCase()
     );
   }
@@ -797,7 +797,7 @@
       return { ok: false, status: 409, message: 'Este correo ya está registrado en LuxeStay Hotels.' };
     }
 
-    if (window.location.protocol === 'file:') {
+    if (globalThis.location.protocol === 'file:') {
       guardarUsuarioLocal(nombre, correo);
       return { ok: true, data: { nombre: nombre.trim(), correo: correo.trim().toLowerCase() } };
     }
@@ -883,6 +883,7 @@
       });
       document.getElementById('password-strength').style.display = 'none';
     } catch (error) {
+      console.error('Error al registrar usuario:', error);
       btn.disabled = false;
       btn.textContent = 'Crear mi cuenta gratis';
       showAlert('No hay conexión con el servidor. Verifica que el backend esté en ejecución.', 'error');

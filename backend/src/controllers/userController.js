@@ -18,7 +18,7 @@ function validarRegistro({ nombre = '', correo = '', contrasena = '' }) {
   else {
     if (contrasena.length < 8) errores.push('Minimo 8 caracteres.');
     if (!/[A-Z]/.test(contrasena)) errores.push('Al menos una letra mayuscula.');
-    if (!/[0-9]/.test(contrasena)) errores.push('Al menos un numero.');
+    if (!/\d/.test(contrasena)) errores.push('Al menos un numero.');
   }
 
   return { errores, nombreLimpio, correoLimpio };
