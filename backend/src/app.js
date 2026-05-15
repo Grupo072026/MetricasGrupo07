@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,7 +9,7 @@ const app = express();
 const frontendPath = path.join(__dirname, '..', '..', 'frontend');
 
 app.use(helmet({
-  contentSecurityPolicy: false
+  contentSecurityPolicy: true
 }));
 app.use(cors({
   origin: process.env.FRONTEND_URL || true
