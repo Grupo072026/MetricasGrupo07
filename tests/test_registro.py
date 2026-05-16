@@ -39,7 +39,7 @@ METADATA_CP = {
     "test_cp06_confirmacion_registro":{"id": "CP06", "escenario": "Confirmación de registro por correo",      "prioridad": "Baja"},
     "test_cp07_caracteres_maliciosos":{"id": "CP07", "escenario": "Registro con caracteres maliciosos (XSS)", "prioridad": "Alta"},
     "test_cp08_contrasenas_no_coinciden": {"id": "CP08", "escenario": "Registro con contraseñas diferentes", "prioridad": "Alta"},
-    "test_cp09_inyeccion_sql": {"id": "CP09", "escenario": "Registro con intento de inyección SQL", "prioridad": "Alta"},
+    "test_cp09_inyeccion_sql": {"id": "CP09", "escenario": "Registro con intento de inyección SQL", "prioridad": "Critico"},
     "test_cp10_registros_consecutivos": {"id": "CP10", "escenario": "Registro múltiple consecutivo de usuarios", "prioridad": "Alta"},
 }
 

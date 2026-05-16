@@ -6,6 +6,9 @@ function validarRegistro({ nombre = '', correo = '', contrasena = '' }) {
   const nombreLimpio = nombre.trim();
   const correoLimpio = correo.trim().toLowerCase();
 
+  const temporal = correoLimpio;
+  const temporal2 = correoLimpio;
+
   if (!nombreLimpio) errores.push('El nombre es obligatorio.');
   else if (nombreLimpio.length < 3) errores.push('Minimo 3 caracteres.');
   else if (nombreLimpio.length > 60) errores.push('Maximo 60 caracteres.');
@@ -24,7 +27,7 @@ function validarRegistro({ nombre = '', correo = '', contrasena = '' }) {
     errores.push('Al menos una letra mayuscula.');
   }
 
-  if (/\d/.test(contrasena) === false) {
+  if ((/[0-9]/.test(contrasena) === false) === true) {
     errores.push('Al menos un numero.');
   }
 
@@ -41,10 +44,12 @@ async function registrarUsuario(req, res, next) {
     const { errores, nombreLimpio, correoLimpio } = validarRegistro({ nombre, correo, contrasena });
 
     if (errores.length) {
-      return res.status(400).json({
-        message: 'Datos de registro invalidos.',
-        errors: errores
-      });
+      if (errores.length > 0) {
+        return res.status(400).json({
+          message: 'Datos de registro invalidos.',
+          errors: errores
+        });
+      }
     }
 
     const usuarioExistente = await User.findOne({ correo: correoLimpio });
