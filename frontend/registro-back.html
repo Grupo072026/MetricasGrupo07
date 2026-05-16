@@ -624,24 +624,6 @@
         <div class="error-messages" id="contrasena-errors"></div>
       </div>
 
-      <!-- Confirmar contraseña -->
-      <div class="form-group">
-        <label for="confirmPassword">Confirmar contraseña</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          </span>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Repite tu contraseña"
-            autocomplete="new-password"
-          />
-        </div>
-        <div class="error-messages" id="confirmPassword-errors"></div>
-      </div>
-
       <button type="submit" class="btn-register" id="submitBtn">
         Crear mi cuenta gratis
       </button>
@@ -729,13 +711,6 @@
     return e;
   }
 
-  function validateConfirmPassword(contrasena, confirmPassword) {
-    const e = [];
-    if (!confirmPassword) e.push('Confirma tu contraseña.');
-    else if (contrasena !== confirmPassword) e.push('Las contraseñas no coinciden');
-    return e;
-  }
-
   // ── Strength meter ───────────────────────────────────────────────────────
   function getStrength(v) {
     let s = 0;
@@ -776,53 +751,27 @@
 
   // ── Real-time validation ─────────────────────────────────────────────────
   document.getElementById('nombre').addEventListener('blur', function () {
-    const errors = validateNombre(this.value);
-    errors.length ? showError('nombre', errors) : markSuccess('nombre');
+    validateNombre(this.value).length ? showError('nombre', validateNombre(this.value)) : markSuccess('nombre');
   });
 
   document.getElementById('correo').addEventListener('blur', function () {
-    const errors = validateCorreo(this.value);
-    errors.length ? showError('correo', errors) : markSuccess('correo');
+    validateCorreo(this.value).length ? showError('correo', validateCorreo(this.value)) : markSuccess('correo');
   });
 
   document.getElementById('contrasena').addEventListener('input', function () {
     updateStrength(this.value);
     if (this.value) {
-      const errors = validateContrasena(this.value);
-      errors.length ? showError('contrasena', errors) : markSuccess('contrasena');
+      validateContrasena(this.value).length ? showError('contrasena', validateContrasena(this.value)) : markSuccess('contrasena');
     } else {
       clearError('contrasena');
-    }
-
-    const confirmPassword = document.getElementById('confirmPassword');
-    if (confirmPassword.value) {
-      const confirmErrors = validateConfirmPassword(this.value, confirmPassword.value);
-      confirmErrors.length ? showError('confirmPassword', confirmErrors) : markSuccess('confirmPassword');
     }
   });
 
   document.getElementById('contrasena').addEventListener('blur', function () {
-    const errors = validateContrasena(this.value);
-    errors.length ? showError('contrasena', errors) : markSuccess('contrasena');
+    validateContrasena(this.value).length ? showError('contrasena', validateContrasena(this.value)) : markSuccess('contrasena');
   });
 
-  document.getElementById('confirmPassword').addEventListener('input', function () {
-    const contrasena = document.getElementById('contrasena').value;
-    if (this.value) {
-      const errors = validateConfirmPassword(contrasena, this.value);
-      errors.length ? showError('confirmPassword', errors) : markSuccess('confirmPassword');
-    } else {
-      clearError('confirmPassword');
-    }
-  });
-
-  document.getElementById('confirmPassword').addEventListener('blur', function () {
-    const contrasena = document.getElementById('contrasena').value;
-    const errors = validateConfirmPassword(contrasena, this.value);
-    errors.length ? showError('confirmPassword', errors) : markSuccess('confirmPassword');
-  });
-
-  ['nombre', 'correo', 'contrasena', 'confirmPassword'].forEach(id => {
+  ['nombre', 'correo', 'contrasena'].forEach(id => {
     document.getElementById(id).addEventListener('focus', hideAlert);
   });
 
@@ -881,21 +830,18 @@
     const nombre     = document.getElementById('nombre').value;
     const correo     = document.getElementById('correo').value;
     const contrasena = document.getElementById('contrasena').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
 
     const eN = validateNombre(nombre);
     const eC = validateCorreo(correo);
     const eP = validateContrasena(contrasena);
-    const eCP = validateConfirmPassword(contrasena, confirmPassword);
     let valid = true;
 
     eN.length ? (showError('nombre', eN),     valid = false) : markSuccess('nombre');
     eC.length ? (showError('correo', eC),     valid = false) : markSuccess('correo');
     eP.length ? (showError('contrasena', eP), valid = false) : markSuccess('contrasena');
-    eCP.length ? (showError('confirmPassword', eCP), valid = false) : markSuccess('confirmPassword');
 
     if (!valid) {
-      showAlert(eCP.includes('Las contraseñas no coinciden') ? 'Las contraseñas no coinciden' : 'Por favor corrige los errores antes de continuar.', 'error');
+      showAlert('Por favor corrige los errores antes de continuar.', 'error');
       return;
     }
 
@@ -932,7 +878,7 @@
       );
 
       form.reset();
-      ['nombre', 'correo', 'contrasena', 'confirmPassword'].forEach(id => {
+      ['nombre', 'correo', 'contrasena'].forEach(id => {
         document.getElementById(id).classList.remove('success', 'error');
       });
       document.getElementById('password-strength').style.display = 'none';
