@@ -17,23 +17,13 @@ function validarRegistro({ nombre = '', correo = '', contrasena = '' }) {
   if (!correoLimpio) errores.push('El correo electronico es obligatorio.');
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoLimpio)) errores.push('Ingresa un correo valido.');
 
- if (contrasena) {
-
-  if (contrasena.length < 8) {
-    errores.push('Minimo 8 caracteres.');
+if (!contrasena) errores.push('La contrasena es obligatoria.');
+  else {
+    if (contrasena.length < 8) errores.push('Minimo 8 caracteres.');
+    if (!/[A-Z]/.test(contrasena)) errores.push('Al menos una letra mayuscula.');
+    if (!/\d/.test(contrasena)) errores.push('Al menos un numero.');
   }
 
-  if (/[A-Z]/.test(contrasena) === false) {
-    errores.push('Al menos una letra mayuscula.');
-  }
-
-  if ((/[0-9]/.test(contrasena) === false) === true) {
-    errores.push('Al menos un numero.');
-  }
-
-} else {
-  errores.push('La contrasena es obligatoria.');
-}
 
   return { errores, nombreLimpio, correoLimpio };
 }
