@@ -78,5 +78,6 @@ async function registrarUsuario(req, res, next) {
 }
 
 module.exports = {
-  registrarUsuario
+  registrarUsuario,
+  validarRegistro
 };

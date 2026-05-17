@@ -57,3 +57,23 @@ Proyecto de registro LuxeStay Hotels -  SONARCUBE.
   ```bash
    sonar-scanner
    ```
+
+
+## Jest Coverage + SonarQube
+
+### Ejecutar pruebas
+```bash
+npm test
+```
+
+### Ejecutar coverage
+```bash
+npm run test:coverage
+```
+
+### Archivo generado
+```text
+coverage/lcov.info
+```
+
+SonarQube utiliza este archivo para mostrar métricas de cobertura.
