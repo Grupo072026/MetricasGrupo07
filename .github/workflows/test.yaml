@@ -43,11 +43,10 @@ jobs:
 
       # Ejecutar pruebas + coverage
       - name: Run Pytest
-        working-directory: tests
         run: |
-          pytest test_registro.py -v \
-          --cov=.. \
-          --cov-report=xml:../coverage.xml
+          pytest tests/test_registro.py -v \
+          --cov=. \
+          --cov-report=xml
 
       # SonarCloud
       - name: SonarCloud Scan
