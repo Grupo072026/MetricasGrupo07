@@ -16,16 +16,37 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+# Node para ESLint
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install npm dependencies
+      run: npm install
+
+    - name: Run ESLint (generate report)
+      run: npx eslint . -f json -o eslint-report.json || true
+
+# Python 
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+
     - name: Install dependencies
-      run: pip install -r requirements.txt;
+      run: pip install -r requirements.txt
+
     - name: Test with pytest
       working-directory: tests
       run: pytest test_registro.py -v
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+# SonarCloud
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

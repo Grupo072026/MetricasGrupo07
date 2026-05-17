@@ -27,7 +27,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 URL = (Path(__file__).resolve().parents[1] / "frontend" / "registro.html").as_uri()
 
 VELOCIDAD_ESCRITURA = 0.03
-PAUSA_ENTRE_PASOS   = 0.8
+PAUSA_ENTRE_PASOS   = 0.4
 
 # Metadatos de cada caso de prueba para el resumen final
 METADATA_CP = {
@@ -38,6 +38,9 @@ METADATA_CP = {
     "test_cp05_correo_ya_existente": {"id": "CP05", "escenario": "Registro con correo ya existente",          "prioridad": "Alta"},
     "test_cp06_confirmacion_registro":{"id": "CP06", "escenario": "Confirmación de registro por correo",      "prioridad": "Baja"},
     "test_cp07_caracteres_maliciosos":{"id": "CP07", "escenario": "Registro con caracteres maliciosos (XSS)", "prioridad": "Alta"},
+    "test_cp08_contrasenas_no_coinciden": {"id": "CP08", "escenario": "Registro con contraseñas diferentes", "prioridad": "Alta"},
+    "test_cp09_inyeccion_sql": {"id": "CP09", "escenario": "Registro con intento de inyección SQL", "prioridad": "Critico"},
+    "test_cp10_registros_consecutivos": {"id": "CP10", "escenario": "Registro múltiple consecutivo de usuarios", "prioridad": "Alta"},
 }
 
 
@@ -349,10 +352,10 @@ def mostrar_resumen(driver, resultados):
 def test_cp01_registro_exitoso(driver):
     """
     Precondición : Usuario accede al formulario con un correo no registrado.
-    Entrada      : Nombre: José García | Correo: jose@eko.com | Contraseña: Fjkig546*
+    Entrada      : Nombre: José García | Correo: jose@eko.com | Contraseña: Fjkig546* | Confirmación password: Fjkig546*
     Resultado    : Mensaje de confirmación visible y usuario guardado en memoria.
     """
-    llenar_formulario(driver, "José García", "jose@eko.com", "Fjkig546*")
+    llenar_formulario(driver, "José García", "jose@eko.com", "Fjkig546*", "Fjkig546*")
     enviar_formulario(driver)
 
     alert = WebDriverWait(driver, 5).until(
@@ -465,10 +468,10 @@ def limpiar_formulario(driver):
 def test_cp05_correo_ya_existente(driver):
     """
     Precondición : El correo existe@eko.com ya debe estar registrado en memoria.
-    Entrada      : Nombre: José García | Correo: existe@eko.com | Contraseña: Fjkig546*
+    Entrada      : Nombre: José García | Correo: existe@eko.com | Contraseña: Fjkig546*, Confirmación Contraseña: "Fjkig546*"
     Resultado    : Error indicando que el correo ya está registrado.
     """
-    registrar_usuario_completo(driver, "José García", "existe@eko.com", "Fjkig546*")
+    registrar_usuario_completo(driver, "José García", "existe@eko.com", "Fjkig546*","Fjkig546*")
 
     registrados = usuarios_en_memoria(driver)
     assert any(u["correo"] == "existe@eko.com" for u in registrados), \
@@ -476,7 +479,7 @@ def test_cp05_correo_ya_existente(driver):
 
     limpiar_formulario(driver)
 
-    llenar_formulario(driver, "José García", "existe@eko.com", "Fjkig546*")
+    llenar_formulario(driver, "José García", "existe@eko.com", "Fjkig546*", "Fjkig546*")
     enviar_formulario(driver)
     time.sleep(PAUSA_ENTRE_PASOS)
 
@@ -498,7 +501,7 @@ def test_cp06_confirmacion_registro(driver):
     Entrada      : Usuario registrado con datos válidos.
     Resultado    : Mensaje de éxito que menciona confirmación por correo.
     """
-    llenar_formulario(driver, "Pedro Ramírez", "pedro@mail.com", "Confirm99*")
+    llenar_formulario(driver, "Pedro Ramírez", "pedro@mail.com", "Confirm99*", "Confirm99*")
     enviar_formulario(driver)
     time.sleep(2)
 
@@ -550,6 +553,112 @@ def test_cp07_caracteres_maliciosos(driver):
         f"CP07 FALLO — Se detectaron scripts inyectados en el DOM ({scripts_activos})"
 
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CP08 — Registro con contraseñas no coincidentes
+# Prioridad: Alta
+# ══════════════════════════════════════════════════════════════════════════════
+def test_cp08_contrasenas_no_coinciden(driver):
+    """
+    Precondición : Ninguna.
+    Entrada      : Contraseña y confirmación diferentes.
+    Resultado    : El sistema impide el registro y muestra error.
+    """
+    llenar_formulario(
+        driver,
+        "Carlos Perez",
+        "cp08@test.com",
+        "Password123",
+        "Password999"
+    )
+
+    enviar_formulario(driver)
+    time.sleep(PAUSA_ENTRE_PASOS)
+
+    assert "error" in obtener_clase_campo(driver, "confirmPassword"),         "CP08 FALLO — El campo 'confirmPassword' debería marcarse como error"
+
+    errores = obtener_errores_campo(driver, "confirmPassword")
+
+    assert "no coinciden" in errores.lower(),         f"CP08 FALLO — Mensaje esperado sobre contraseñas diferentes, se obtuvo: '{errores}'"
+
+    alert = obtener_alert(driver)
+
+    assert "no coinciden" in alert.lower(),         f"CP08 FALLO — La alerta global debería indicar contraseñas diferentes, se obtuvo: '{alert}'"
+
+    assert len(usuarios_en_memoria(driver)) == 0,         "CP08 FALLO — No debería registrarse el usuario en memoria"
+
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CP09 — Registro con intento de inyección SQL
+# Prioridad: Alta
+# ══════════════════════════════════════════════════════════════════════════════
+def test_cp09_inyeccion_sql(driver):
+    """
+    Precondición : Ninguna.
+    Entrada      : Payload SQL malicioso en el nombre del usuario.
+    Resultado    : El sistema rechaza la entrada y no registra el usuario.
+    """
+    payload_sql = "' OR '1'='1"
+
+    llenar_formulario(
+        driver,
+        payload_sql,
+        "sqltest@test.com",
+        "Password123",
+        "Password123"
+    )
+
+    enviar_formulario(driver)
+    time.sleep(PAUSA_ENTRE_PASOS)
+
+    assert "error" in obtener_clase_campo(driver, "nombre"),         "CP09 FALLO — El campo 'nombre' debería marcarse como error"
+
+    errores = obtener_errores_campo(driver, "nombre")
+
+    assert len(errores) > 0,         "CP09 FALLO — Debería mostrarse un mensaje de validación"
+
+    alert = obtener_alert(driver)
+
+    assert "corrige los errores" in alert.lower(),         f"CP09 FALLO — Se esperaba alerta de validación, se obtuvo: '{alert}'"
+
+    assert len(usuarios_en_memoria(driver)) == 0,         "CP09 FALLO — No debería registrarse el usuario en memoria"
+
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CP10 — Registro múltiple consecutivo
+# Prioridad: Alta
+# ══════════════════════════════════════════════════════════════════════════════
+def test_cp10_registros_consecutivos(driver):
+    """
+    Precondición : Ninguna.
+    Entrada      : Registro consecutivo de múltiples usuarios válidos.
+    Resultado    : Todos los usuarios se registran correctamente sin errores.
+    """
+    usuarios = [
+        ("Ana Torres", "ana01@test.com", "Password123*"),
+        ("Luis Gomez", "luis02@test.com", "Password123*"),
+        ("Maria Perez", "maria03@test.com", "Password123*")
+    ]
+
+    for nombre, correo, password in usuarios:
+
+        llenar_formulario(driver, nombre, correo, password, password)
+        enviar_formulario(driver)
+
+        alert = obtener_alert(driver)
+
+        assert "bienvenido" in alert.lower(),             f"CP10 FALLO — No se mostró mensaje exitoso para {correo}"
+
+        registrados = usuarios_en_memoria(driver)
+
+        assert any(u["correo"] == correo for u in registrados),             f"CP10 FALLO — El usuario {correo} no quedó registrado"
+
+        limpiar_formulario(driver)
+
 # ── Helpers (definidos después de los fixtures para claridad) ──────────────────
 
 def esperar_campo(driver, field_id, timeout=10):
@@ -569,7 +678,7 @@ def escribir_lento(driver, field_id, texto):
         time.sleep(VELOCIDAD_ESCRITURA)
 
 
-def llenar_formulario(driver, nombre="", correo="", password=""):
+def llenar_formulario(driver, nombre="", correo="", password="", confirm_password=""):
     if nombre:
         escribir_lento(driver, "nombre", nombre)
         time.sleep(PAUSA_ENTRE_PASOS)
@@ -578,6 +687,9 @@ def llenar_formulario(driver, nombre="", correo="", password=""):
         time.sleep(PAUSA_ENTRE_PASOS)
     if password:
         escribir_lento(driver, "contrasena", password)
+        time.sleep(PAUSA_ENTRE_PASOS)
+    if confirm_password:
+        escribir_lento(driver, "confirmPassword", confirm_password)
         time.sleep(PAUSA_ENTRE_PASOS)
 
 
@@ -606,8 +718,8 @@ def usuarios_en_memoria(driver):
     return driver.execute_script("return window.__usuariosRegistrados;") or []
 
 
-def registrar_usuario_completo(driver, nombre, correo, password):
-    llenar_formulario(driver, nombre, correo, password)
+def registrar_usuario_completo(driver, nombre, correo, password, confirm_password):
+    llenar_formulario(driver, nombre, correo, password, confirm_password)
     enviar_formulario(driver)
     WebDriverWait(driver, 5).until(
         EC.text_to_be_present_in_element((By.ID, "alert-box"), "Bienvenido")

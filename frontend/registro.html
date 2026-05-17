@@ -624,6 +624,24 @@
         <div class="error-messages" id="contrasena-errors"></div>
       </div>
 
+      <!-- Confirmar contraseña -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </span>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="Repite tu contraseña"
+            autocomplete="new-password"
+          />
+        </div>
+        <div class="error-messages" id="confirmPassword-errors"></div>
+      </div>
+
       <button type="submit" class="btn-register" id="submitBtn">
         Crear mi cuenta gratis
       </button>
@@ -689,7 +707,7 @@
     if (!v.trim())               e.push('El nombre es obligatorio.');
     else if (v.trim().length < 3) e.push('Mínimo 3 caracteres.');
     else if (v.trim().length > 60) e.push('Máximo 60 caracteres.');
-    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'\-]+$/.test(v.trim()))
+    else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(v.trim()))
       e.push('Solo letras y espacios.');
     return e;
   }
@@ -707,7 +725,14 @@
     if (!v)            { e.push('La contraseña es obligatoria.'); return e; }
     if (v.length < 8)  e.push('Mínimo 8 caracteres.');
     if (!/[A-Z]/.test(v)) e.push('Al menos una letra mayúscula.');
-    if (!/[0-9]/.test(v)) e.push('Al menos un número.');
+    if (!/\d/.test(v)) e.push('Al menos un número.');
+    return e;
+  }
+
+  function validateConfirmPassword(contrasena, confirmPassword) {
+    const e = [];
+    if (!confirmPassword) e.push('Confirma tu contraseña.');
+    else if (contrasena !== confirmPassword) e.push('Las contraseñas no coinciden');
     return e;
   }
 
@@ -717,7 +742,7 @@
     if (v.length >= 8)  s++;
     if (v.length >= 12) s++;
     if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
-    if (/[0-9]/.test(v)) s++;
+    if (/\d/.test(v)) s++;
     if (/[^A-Za-z0-9]/.test(v)) s++;
     if (s <= 1) return { level:1, label:'Muy débil', cls:'active-weak'   };
     if (s === 2) return { level:2, label:'Débil',    cls:'active-fair'   };
@@ -751,41 +776,67 @@
 
   // ── Real-time validation ─────────────────────────────────────────────────
   document.getElementById('nombre').addEventListener('blur', function () {
-    validateNombre(this.value).length ? showError('nombre', validateNombre(this.value)) : markSuccess('nombre');
+    const errors = validateNombre(this.value);
+    errors.length ? showError('nombre', errors) : markSuccess('nombre');
   });
 
   document.getElementById('correo').addEventListener('blur', function () {
-    validateCorreo(this.value).length ? showError('correo', validateCorreo(this.value)) : markSuccess('correo');
+    const errors = validateCorreo(this.value);
+    errors.length ? showError('correo', errors) : markSuccess('correo');
   });
 
   document.getElementById('contrasena').addEventListener('input', function () {
     updateStrength(this.value);
     if (this.value) {
-      validateContrasena(this.value).length ? showError('contrasena', validateContrasena(this.value)) : markSuccess('contrasena');
+      const errors = validateContrasena(this.value);
+      errors.length ? showError('contrasena', errors) : markSuccess('contrasena');
     } else {
       clearError('contrasena');
+    }
+
+    const confirmPassword = document.getElementById('confirmPassword');
+    if (confirmPassword.value) {
+      const confirmErrors = validateConfirmPassword(this.value, confirmPassword.value);
+      confirmErrors.length ? showError('confirmPassword', confirmErrors) : markSuccess('confirmPassword');
     }
   });
 
   document.getElementById('contrasena').addEventListener('blur', function () {
-    validateContrasena(this.value).length ? showError('contrasena', validateContrasena(this.value)) : markSuccess('contrasena');
+    const errors = validateContrasena(this.value);
+    errors.length ? showError('contrasena', errors) : markSuccess('contrasena');
   });
 
-  ['nombre', 'correo', 'contrasena'].forEach(id => {
+  document.getElementById('confirmPassword').addEventListener('input', function () {
+    const contrasena = document.getElementById('contrasena').value;
+    if (this.value) {
+      const errors = validateConfirmPassword(contrasena, this.value);
+      errors.length ? showError('confirmPassword', errors) : markSuccess('confirmPassword');
+    } else {
+      clearError('confirmPassword');
+    }
+  });
+
+  document.getElementById('confirmPassword').addEventListener('blur', function () {
+    const contrasena = document.getElementById('contrasena').value;
+    const errors = validateConfirmPassword(contrasena, this.value);
+    errors.length ? showError('confirmPassword', errors) : markSuccess('confirmPassword');
+  });
+
+  ['nombre', 'correo', 'contrasena', 'confirmPassword'].forEach(id => {
     document.getElementById(id).addEventListener('focus', hideAlert);
   });
 
   // Registro local de respaldo para conservar compatibilidad al abrir el HTML directamente.
-  window.__usuariosRegistrados = [];
+  globalThis.__usuariosRegistrados = [];
 
   function correoYaRegistrado(correo) {
-    return window.__usuariosRegistrados.some(
+    return globalThis.__usuariosRegistrados.some(
       u => u.correo.toLowerCase() === correo.trim().toLowerCase()
     );
   }
 
   function guardarUsuarioLocal(nombre, correo) {
-    window.__usuariosRegistrados.push({
+    globalThis.__usuariosRegistrados.push({
       nombre: nombre.trim(),
       correo: correo.trim().toLowerCase(),
       fechaRegistro: new Date().toISOString()
@@ -797,7 +848,7 @@
       return { ok: false, status: 409, message: 'Este correo ya está registrado en LuxeStay Hotels.' };
     }
 
-    if (window.location.protocol === 'file:') {
+    if (globalThis.location.protocol === 'file:') {
       guardarUsuarioLocal(nombre, correo);
       return { ok: true, data: { nombre: nombre.trim(), correo: correo.trim().toLowerCase() } };
     }
@@ -830,18 +881,21 @@
     const nombre     = document.getElementById('nombre').value;
     const correo     = document.getElementById('correo').value;
     const contrasena = document.getElementById('contrasena').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
     const eN = validateNombre(nombre);
     const eC = validateCorreo(correo);
     const eP = validateContrasena(contrasena);
+    const eCP = validateConfirmPassword(contrasena, confirmPassword);
     let valid = true;
 
     eN.length ? (showError('nombre', eN),     valid = false) : markSuccess('nombre');
     eC.length ? (showError('correo', eC),     valid = false) : markSuccess('correo');
     eP.length ? (showError('contrasena', eP), valid = false) : markSuccess('contrasena');
+    eCP.length ? (showError('confirmPassword', eCP), valid = false) : markSuccess('confirmPassword');
 
     if (!valid) {
-      showAlert('Por favor corrige los errores antes de continuar.', 'error');
+      showAlert(eCP.includes('Las contraseñas no coinciden') ? 'Las contraseñas no coinciden' : 'Por favor corrige los errores antes de continuar.', 'error');
       return;
     }
 
@@ -878,11 +932,12 @@
       );
 
       form.reset();
-      ['nombre', 'correo', 'contrasena'].forEach(id => {
+      ['nombre', 'correo', 'contrasena', 'confirmPassword'].forEach(id => {
         document.getElementById(id).classList.remove('success', 'error');
       });
       document.getElementById('password-strength').style.display = 'none';
     } catch (error) {
+      console.error('Error al registrar usuario:', error);
       btn.disabled = false;
       btn.textContent = 'Crear mi cuenta gratis';
       showAlert('No hay conexión con el servidor. Verifica que el backend esté en ejecución.', 'error');
