@@ -1,48 +1,56 @@
-name: Test with selemium
+name: Test with Selenium
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-# Node para ESLint
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      # Checkout completo para Sonar
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install npm dependencies
-      run: npm install
+      # Node.js para ESLint
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
-    - name: Run ESLint (generate report)
-      run: npx eslint . -f json -o eslint-report.json || true
+      - name: Install npm dependencies
+        run: npm install
 
-# Python 
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
+      - name: Run ESLint
+        run: npx eslint . -f json -o eslint-report.json || true
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+      # Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Test with pytest
-      working-directory: tests
-      run: pytest test_registro.py -v
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
 
-# SonarCloud
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarqube-scan-action@v6
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # Ejecutar pruebas + coverage
+      - name: Run Pytest
+        working-directory: tests
+        run: |
+          pytest test_registro.py -v \
+          --cov=.. \
+          --cov-report=xml:../coverage.xml
+
+      # SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
